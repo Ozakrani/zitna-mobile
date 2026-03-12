@@ -17,34 +17,84 @@ class ProductViewModel : ViewModel() {
     var filteredProducts by mutableStateOf<List<Product>>(emptyList())
         private set
 
+    var searchKeyword by mutableStateOf("")
+        private set
+
+    var isLoading by mutableStateOf(false)
+        private set
+
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+
     fun loadProducts() {
-
         viewModelScope.launch {
-
+            isLoading = true
             try {
-
                 val response = RetrofitInstance.api.getProducts()
-
-                println("Produits reçus depuis API: $response")
-
                 products = response
-                filteredProducts = response
-
+                applyFilter()
             } catch (e: Exception) {
-
-                println("Erreur API: ${e.message}")
-                e.printStackTrace()
-
+                errorMessage = "Erreur chargement : ${e.message}"
+            } finally {
+                isLoading = false
             }
         }
     }
-    fun filterProducts(keyword: String, type: String) {
 
-        filteredProducts = products.filter {
+    fun onSearchChanged(keyword: String) {
+        searchKeyword = keyword
+        applyFilter()
+    }
 
-            (keyword.isBlank() || it.name.contains(keyword, ignoreCase = true)) &&
-                    (type.isBlank() || it.type.contains(type, ignoreCase = true))
-
+    private fun applyFilter() {
+        filteredProducts = if (searchKeyword.isBlank()) {
+            products
+        } else {
+            products.filter {
+                it.name.contains(searchKeyword, ignoreCase = true)
+            }
         }
+    }
+
+    fun createProduct(product: Product, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                RetrofitInstance.api.createProduct(product)
+                loadProducts()
+                onSuccess()
+            } catch (e: Exception) {
+                errorMessage = "Erreur création : ${e.message}"
+            }
+        }
+    }
+
+    fun updateProduct(product: Product, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                RetrofitInstance.api.updateProduct(product.id, product)
+                loadProducts()
+                onSuccess()
+            } catch (e: Exception) {
+                errorMessage = "Erreur modification : ${e.message}"
+            }
+        }
+    }
+
+    fun deleteProduct(productId: String) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.deleteProduct(productId)
+                if (response.isSuccessful || response.code() == 204) {
+                    loadProducts()  // recharge la liste après suppression
+                } else {
+                    errorMessage = "Erreur suppression : code ${response.code()}"
+                }
+            } catch (e: Exception) {
+                errorMessage = "Erreur suppression : ${e.message}"
+            }
+        }
+    }
+    fun clearError() {
+        errorMessage = null
     }
 }
