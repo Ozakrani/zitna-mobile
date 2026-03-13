@@ -6,10 +6,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zitnamobile.data.model.Product
+import com.example.zitnamobile.data.remote.ProductApiService
 import com.example.zitnamobile.data.remote.RetrofitInstance
 import kotlinx.coroutines.launch
 
-class ProductViewModel : ViewModel() {
+class ProductViewModel(
+    private val api: ProductApiService = RetrofitInstance.api // ← paramètre injecté
+) : ViewModel() {
 
     var products by mutableStateOf<List<Product>>(emptyList())
         private set
@@ -30,7 +33,7 @@ class ProductViewModel : ViewModel() {
         viewModelScope.launch {
             isLoading = true
             try {
-                val response = RetrofitInstance.api.getProducts()
+                val response = api.getProducts() // ← api injectée
                 products = response
                 applyFilter()
             } catch (e: Exception) {
@@ -59,7 +62,7 @@ class ProductViewModel : ViewModel() {
     fun createProduct(product: Product, onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
-                RetrofitInstance.api.createProduct(product)
+                api.createProduct(product)
                 loadProducts()
                 onSuccess()
             } catch (e: Exception) {
@@ -71,7 +74,7 @@ class ProductViewModel : ViewModel() {
     fun updateProduct(product: Product, onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
-                RetrofitInstance.api.updateProduct(product.id, product)
+                api.updateProduct(product.id, product)
                 loadProducts()
                 onSuccess()
             } catch (e: Exception) {
@@ -83,9 +86,9 @@ class ProductViewModel : ViewModel() {
     fun deleteProduct(productId: String) {
         viewModelScope.launch {
             try {
-                val response = RetrofitInstance.api.deleteProduct(productId)
+                val response = api.deleteProduct(productId)
                 if (response.isSuccessful || response.code() == 204) {
-                    loadProducts()  // recharge la liste après suppression
+                    loadProducts()
                 } else {
                     errorMessage = "Erreur suppression : code ${response.code()}"
                 }
@@ -94,6 +97,7 @@ class ProductViewModel : ViewModel() {
             }
         }
     }
+
     fun clearError() {
         errorMessage = null
     }
