@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -61,6 +62,10 @@ class MainActivity : ComponentActivity() {
                                 if (state is AuthUiState.Success) {
                                     authToken = state.response.accessToken
                                     userRole = state.response.user.role
+
+                                    // ← Injecter le token dans le RetrofitClient des orders
+                                    com.example.zitnamobile.api.RetrofitClient.setToken(authToken)
+
                                     navController.navigate("home") {
                                         popUpTo("login") { inclusive = true }
                                     }
