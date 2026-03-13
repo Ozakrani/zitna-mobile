@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   # ── CI ─────────────────────────────────────────
@@ -29,22 +30,12 @@ jobs:
       - name: Run tests
         run: ./gradlew test --continue
 
-      - name: Generate Jacoco report
-        run: ./gradlew jacocoTestReport
-
       - name: Upload test report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-report
-          path: build/reports/tests/test/
-
-      - name: Upload Jacoco report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: jacoco-report
-          path: build/jacocoHtml/
+          path: build/reports/tests/
 
   # ── CD ─────────────────────────────────────────
   deploy:
@@ -65,12 +56,12 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Build JAR
-        run: ./gradlew bootJar
+      - name: Build APK
+        run: ./gradlew assembleDebug
 
-      - name: Upload JAR artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-jar
-          path: build/libs/*.jar
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
