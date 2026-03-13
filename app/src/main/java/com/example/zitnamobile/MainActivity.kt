@@ -1,16 +1,25 @@
 package com.example.zitnamobile
 
+import androidx.compose.ui.Modifier
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
+import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.zitnamobile.data.remote.RetrofitClient
 import com.example.zitnamobile.data.repository.AuthRepositoryImpl
@@ -19,6 +28,7 @@ import com.example.zitnamobile.ui.auth.AuthViewModel
 import com.example.zitnamobile.ui.auth.AuthViewModelFactory
 import com.example.zitnamobile.ui.auth.LoginScreen
 import com.example.zitnamobile.ui.auth.RegisterScreen
+import com.example.zitnamobile.ui.screens.ProductListScreen
 import com.example.zitnamobile.ui.theme.ZitnaMobileTheme
 
 class MainActivity : ComponentActivity() {
@@ -32,12 +42,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             ZitnaMobileTheme {
                 val navController = rememberNavController()
-                val viewModel: AuthViewModel = viewModel(factory = factory)
+                val authViewModel: AuthViewModel = viewModel(factory = factory)
 
                 NavHost(navController = navController, startDestination = "login") {
+
                     composable("login") {
                         LoginScreen(
-                            viewModel = viewModel,
+                            viewModel = authViewModel,
                             onLoginSuccess = {
                                 navController.navigate("home") {
                                     popUpTo("login") { inclusive = true }
@@ -46,9 +57,10 @@ class MainActivity : ComponentActivity() {
                             onNavigateToRegister = { navController.navigate("register") }
                         )
                     }
+
                     composable("register") {
                         RegisterScreen(
-                            viewModel = viewModel,
+                            viewModel = authViewModel,
                             onRegisterSuccess = {
                                 navController.navigate("home") {
                                     popUpTo("register") { inclusive = true }
@@ -57,8 +69,44 @@ class MainActivity : ComponentActivity() {
                             onNavigateToLogin = { navController.popBackStack() }
                         )
                     }
+
+                    // ── Page principale avec bottom navigation ──
                     composable("home") {
-                        OrderScreen(modifier = Modifier.fillMaxSize())
+                        val homeNavController = rememberNavController()
+                        val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
+                        val currentRoute = navBackStackEntry?.destination?.route
+
+                        Scaffold(
+                            bottomBar = {
+                                NavigationBar {
+                                    NavigationBarItem(
+                                        selected = currentRoute == "orders",
+                                        onClick = { homeNavController.navigate("orders") },
+                                        icon = { Icon(Icons.Default.ShoppingCart, contentDescription = null) },
+                                        label = { Text("Commandes") }
+                                    )
+                                    NavigationBarItem(
+                                        selected = currentRoute == "products",
+                                        onClick = { homeNavController.navigate("products") },
+                                        icon = { Icon(Icons.Default.List, contentDescription = null) },
+                                        label = { Text("Produits") }
+                                    )
+                                }
+                            }
+                        ) { innerPadding ->
+                            NavHost(
+                                navController = homeNavController,
+                                startDestination = "orders",
+                                modifier = Modifier.padding(innerPadding)
+                            ) {
+                                composable("orders") {
+                                    OrderScreen(modifier = Modifier.fillMaxSize())
+                                }
+                                composable("products") {
+                                    ProductListScreen(modifier = Modifier.fillMaxSize())
+                                }
+                            }
+                        }
                     }
                 }
             }
