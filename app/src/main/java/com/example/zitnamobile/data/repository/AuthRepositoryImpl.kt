@@ -16,9 +16,23 @@ class AuthRepositoryImpl(private val apiService: ApiService) : AuthRepository {
         }
     }
 
-    override suspend fun register(...): Result<AuthResponse> {
+    override suspend fun register(
+        firstName: String,
+        lastName: String,
+        email: String,
+        password: String,
+        phone: String
+    ): Result<AuthResponse> {
         return try {
-            val response = apiService.register(RegisterRequest(...))
+            val response = apiService.register(
+                RegisterRequest(
+                    firstName = firstName,
+                    lastName = lastName,
+                    email = email,
+                    password = password,
+                    phone = phone
+                )
+            )
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)

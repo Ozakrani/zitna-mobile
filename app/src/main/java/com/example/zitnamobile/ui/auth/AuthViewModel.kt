@@ -1,7 +1,13 @@
 package com.example.zitnamobile.ui.auth
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.zitnamobile.data.remote.dto.AuthResponse
+import com.example.zitnamobile.data.repository.AuthRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 sealed class AuthUiState {
     object Idle : AuthUiState()
